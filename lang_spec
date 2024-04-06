@@ -1,0 +1,98 @@
+// this proc uses 5 cells which need to be provided when called
+// if x and y are to be preserved you need the original 5 cells,
+// but if x and y can be modified then only 3 cells are required at most
+
+proc (x, y) -> z
+struct (x, y, z = 0, temp0, temp1)[1]
+// !y means y can be changed by the compiler in ifs
+
+[[useif]]
+ref temp0, temp1
+
+while x
+	if0 y
+		inc z
+	end
+	dec x, y
+end
+
+
+
+
+----------------------
+PROC L_PARAN (ID: x) COMMA (ID: y) R_PARAN ARROW (ID: z) NL
+STRUCT L_PARAN (ID: x) COMMA (ID: y) COMMA (ID: z) EQUAL (NUM: 0) COMMA (ID: temp0) COMMA (ID: temp1) R_PARAN L_BRACKET (NUM: 1) R_BRACKET NL
+
+(COMP_DIR: useif) NL
+REF (ID: temp0) (ID: temp1) NL
+
+WHILE (ID: x) NL
+	IF (ID: y) NL ELSE NL
+		(ID: inc, BUILTIN) (ID: z) NL
+	END
+	(ID: dec, BUILTIN) (ID: x) COMMA (ID: y)
+END
+
+----------------------
+// any bare strings that aren't in the grammar are considered ids
+PROGRAM(PROC(ID_LIST(x, y), z), [
+	STRUCT_STMT(VAR_LIST(x, y, z = 0, temp0, temp1), 1),
+	COMP_DIR(useif, ID_LIST(temp0, temp1)),
+	WHILE_STMT(x, [
+		IF_STMT(y, [], ELSE([
+			FUNC_CALL(inc, ID_LIST(z))
+		])),
+		FUNC_CALL(dec, ID_LIST(x, y))
+	])
+])
+
+----------------------
+builtins = [..., set, inc, dec, ...]
+var_list = [x={pos=0}, y={pos=1}, z={pos=2, value=0}, temp0={pos=3}, temp1={pos=4}]
+useif = [temp0, temp1]
+
+x[
+	// copy y to temp1 to preserve y
+	y[temp0+temp1+y-]
+	temp0[y+temp0-]
+
+	temp0+
+	temp1[temp0-temp1[-]]temp0[z+temp0]
+
+	x-y-x
+]
+
+-----------------------
+[
+	>[>>+>+<<<-]
+	>>[<<+>>-]
+
+	+
+	>[<->[-]]<[<+>]
+
+	<<<->+<
+]
+
+----------------------
+TOKENS = PROC STRUCT REF WHILE IF ELSE END NL L_PARAN R_PARAN L_BRACKET R_BRACKET EQUAL COMMA
+
+PROGRAM := PROC_DECL? STATEMENT*
+PROC_DECL := PROC L_PARAN ID_LIST R_PARAN ARROW ID
+ID_LIST := ID | ID COMMA
+
+STATEMENT := (STRUCT_STMT | COMP_DIR | REF_STMT | WHILE_STMT | IF_STMT | FUNC_CALL) NL
+
+// VAR_LIST can have default values
+VAR_LIST := ID (EQUAL NUM)? | ID (EQUAL NUM)? COMMA
+VEC_SIZE := R_BRACKET (NUM | ID) L_BRACKET
+STRUCT_STMT := STRUCT L_PARAN VAR_LIST R_PARAN VEC_SIZE?
+
+COMP_DIR := L_BRACKET L_BRACKET ID R_BRACKET R_BRACKET
+
+REF_STMT := REF ID_LIST
+
+WHILE_STMT := WHILE ID NL STATEMENT* END
+
+IF_STMT := IF ID NL STATEMENT* (ELSE NL STATEMENT*) END
+
+FUNC_CALL := ID ID_LIST

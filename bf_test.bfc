@@ -1,0 +1,12 @@
+proc (x, y) -> z
+struct (x, y, z = 0, temp0, temp1)[1]
+
+[[useif]]
+ref temp0, temp1
+
+while x
+	if0 y
+		inc z
+	end
+	dec x, y
+end
