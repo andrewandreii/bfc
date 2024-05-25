@@ -1,3 +1,7 @@
 a.out
 *.bf
+*.o
 .vscode/*
+debugger/*
+debugger/
+bfc
