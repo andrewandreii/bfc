@@ -27,7 +27,7 @@ token_t *tokenize(FILE *stream) {
     int t_top = 0;
     int t_len = TOKEN_BUF_LEN;
 
-    char *id_buffer = malloc(ID_LEN);
+    char id_buffer[ID_LEN];
     int id_len = ID_LEN;
     char c;
 
@@ -43,14 +43,28 @@ token_t *tokenize(FILE *stream) {
             break;
         }
 
-        fseek(stream, -1, SEEK_CUR);
+        char next_c = fgetc(stream);
+        if (next_c == EOF) {
+            fseek(stream, -1, SEEK_CUR);
+        } else {
+            fseek(stream, -2, SEEK_CUR);
+        }
 
         if (t_top >= t_len) {
             t_list = realloc(t_list, sizeof(token_t) * (t_len + TOKEN_BUF_INC));
             t_len += TOKEN_BUF_INC;
         }
 
-        if (isdigit(c)) {
+        if (isdigit(c) || ((c == '+' || c == '-') && isdigit(next_c))) {
+            if (!isdigit(c)) {
+                fgetc(stream);
+            }
+
+            int sign = 1;
+            if (c == '-') {
+                sign = -1;
+            }
+
             t_list[t_top].type = NUM;
 
             int num = 0;
@@ -60,7 +74,7 @@ token_t *tokenize(FILE *stream) {
             }
             fseek(stream, -1, SEEK_CUR);
 
-            t_list[t_top].val.num = num;
+            t_list[t_top].val.num = num * sign;
             ++ t_top;
         } else if (isalpha(c)) {
             int id_top = 0;
@@ -100,7 +114,7 @@ token_t *tokenize(FILE *stream) {
                     type = NL;
                 } break;
                 case '(': {
-                    type = L_PRAN;
+                    type = L_PARAN;
                 } break;
                 case ')': {
                     type = R_PARAN;
@@ -128,7 +142,8 @@ token_t *tokenize(FILE *stream) {
                     if (fgetc(stream) != '/') {
                         goto error;
                     }
-                    ++ char_no;
+                    char_no = 0;
+                    ++ line_no;
                     while ((c = fgetc(stream)) != '\n' && !feof(stream));
                 } break;
                 default: {
@@ -136,18 +151,21 @@ token_t *tokenize(FILE *stream) {
                     // TODO: make the error better
                     fprintf(
                         stderr,
-                        "Error in token starting with: %c (line %d, char %d)\n",
-                        c, line_no, char_no
+                        "Error in token starting with: \'%c\' (0x%02X) (line %d, char %d)\n",
+                        c, c, line_no, char_no
                     );
                     exit(1);
                 }
             }
+
             t_list[t_top].type = type;
             ++ t_top;
         }
+        // log_token(stdout, t_list + t_top - 1);
+        // printf("token ended at %d.\n", ftell(stream));
     }
 
-    t_list[t_top].type = -1;
+    t_list[t_top].type = EOF_TOKEN;
 
     return t_list;
 }
