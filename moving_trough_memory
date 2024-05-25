@@ -1,0 +1,25 @@
+| struct_1                  | list
+| x | y | z | temp0 | temp1 | a | b | a | b | a | b | ...
+
+goto list
+while a
+	sgoto +1
+end
+goto x // doesn't work since we don't know where we are anymore
+
+// if we know temp1 is the only one that's 0, we could do:
+while
+    goto -1
+end
+set_pos temp1 // telling the compiler that we're sure we're at temp1
+
+// or if we know b != 0 and temp1 == 0
+while b
+    sgoto -1
+end
+// translates to: b[<<]
+
+// temp0 and temp1 become invalid outside of struct_1, only relative positions work inside list
+// for example,
+struct vars(x, y, z = 0, temp0, temp1)[1]
+struct list(a, b)
