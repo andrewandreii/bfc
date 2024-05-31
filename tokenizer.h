@@ -14,11 +14,18 @@ enum token_type {
 };
 
 typedef struct {
+	int line_no;
+	int col_no;
+} source_file_pos_t;
+
+typedef struct {
 	enum token_type type;
 	union {
 		char *str;
 		int num;
 	} val;
+
+	source_file_pos_t source_file_pos;
 } token_t;
 
 #define TOKEN_BUF_LEN 10

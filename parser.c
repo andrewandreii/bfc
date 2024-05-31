@@ -51,8 +51,9 @@ extern const char *token_names[];
 void expect_token(token_t *t, enum token_type type) {
     if (t->type != type) {
         // TODO: add info about location in file
-        fprintf(stderr, "Expected token of type: %s not %s.\n", token_names[type], token_names[t->type]);
-        exit(-1);
+        // fprintf(stderr, "Expected token of type: %s not %s.\n", token_names[type], token_names[t->type]);
+        // exit(-1);
+        expected_token_error(t, type);
     }
 }
 
@@ -76,8 +77,9 @@ void expect_tokens(token_t *t, int type_num, ...) {
     va_end(type);
 
     if (!ok) {
-        fprintf(stderr, "Expected token of type: %s not %s.\n", token_names[current_type], token_names[t->type]);
-        exit(-1);
+        // fprintf(stderr, "Expected token of type: %s not %s.\n", token_names[current_type], token_names[t->type]);
+        // exit(-1);
+        expected_token_error(t, current_type);
     }
 }
 
@@ -199,19 +201,16 @@ int parse_var_list(token_t **t, int struct_id) {
 loc_var_t get_loc_var_from_expr(expr_t *expr) {
     loc_var_t lvar = {-1, 0};
 
-    // int rel_pos;
-    // int anchor = -1;
     while (expr->type == ADD || expr->type == SUB) {
         if (expr->left->type == ID) {
             if (lvar.var_id != -1) {
-                fprintf(stderr, "Relative position cannot have two anchors.\n");
-                exit(-1);
+                REL_POS_MULTIPLE_ANCHORS_ERROR(expr->left);
             }
             lvar.var_id = get_struct_by_name(expr->left->val.str);
             if (lvar.var_id == -1) {
                 lvar.var_id = get_var_by_name(expr->left->val.str);
                 if (lvar.var_id == -1) {
-                    UNDEFINED_VARIABLE_ERROR;
+                    UNDEFINED_VARIABLE_ERROR(expr->left);
                 }
             } else {
                 // URGENT: the struct needs to know its children
@@ -227,7 +226,17 @@ loc_var_t get_loc_var_from_expr(expr_t *expr) {
 }
 
 expr_t *parse_expr(token_t **t) {
-    expect_tokens2(*t, ID, NUM);
+    expect_tokens(*t, 3, ID, NUM, BINOP);
+
+    int sign = 1;
+    if ((*t)->type == BINOP) {
+        switch ((*t)->val.num) {
+            case '+': break;
+            case '-': sign = -1; break;
+            default: UNEXPECTED_TOKEN(*t);
+        }
+        ++ *t;
+    }
 
     if ((*t)[1].type != BINOP) {
         ++ *t;
@@ -244,12 +253,12 @@ expr_t *parse_expr(token_t **t) {
             expr->type = SUB;
         } break;
         default: {
-            printf("Unexpected binary operation: \'%c\'\n", (*t)->val.num);
-            exit(-1);
+            UNEXPECTED_TOKEN(*t);
         }
     }
 
     ++ *t;
+    (*t)[-2].val.num *= sign;
     expr->left = (*t) - 2;
     expr->right = parse_expr(t);
 
@@ -286,7 +295,6 @@ loc_var_t *parse_id_list(token_t **t, int *count) {
         // set_var_flags(var_id, DEFINED_FLAG);
         // }
 
-        ++ *t;
         if ((*t)->type != COMMA) {
             break;
         }
@@ -369,8 +377,7 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
             stmt->data.control_flow_call.body = parse_body(t);
         }
         default: {
-            printf("Unexpected start of statement token %s.\n", token_names[(*t)->type]);
-            exit(1);
+            UNEXPECTED_TOKEN(*t);
         }
     }
 }
