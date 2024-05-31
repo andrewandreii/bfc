@@ -56,6 +56,31 @@ void expect_token(token_t *t, enum token_type type) {
     }
 }
 
+#define expect_tokens2(token, type1, type2) expect_tokens(token, 2, type1, type2)
+void expect_tokens(token_t *t, int type_num, ...) {
+    va_list type;
+    va_start(type, type_num);
+
+    int ok = 0;
+
+    enum token_type current_type;
+
+    int i;
+    for (i = 0; i < type_num; ++ i) {
+        if (t->type == (current_type = va_arg(type, enum token_type))) {
+            ok = 1;
+            break;
+        }
+    }
+
+    va_end(type);
+
+    if (!ok) {
+        fprintf(stderr, "Expected token of type: %s not %s.\n", token_names[current_type], token_names[t->type]);
+        exit(-1);
+    }
+}
+
 int get_next_struct_id() {
     return struct_table_top;
 }
@@ -96,6 +121,16 @@ int get_var_by_name(char *name) {
     return var - var_table;
 }
 
+int get_struct_by_name(char *name) {
+    struct_t *struct_ = map_get_value(struct_map, name);
+
+    if (!struct_) {
+        return -1;
+    }
+
+    return struct_ - struct_table;
+}
+
 int get_func_by_name(char *name) {
     func_table_entry_t *func = map_get_value(func_map, name);
 
@@ -106,6 +141,13 @@ int get_func_by_name(char *name) {
     fprintf(stderr, "Found function %s\n", name);
 
     return func - builtin_functions;
+}
+
+int get_id_by_name(char *name) {
+    // int id = get_var_by_name(name);
+    // if (id == -1) {
+    //     id = get_
+    // }
 }
 
 // TODO: use name
@@ -124,6 +166,10 @@ int register_var(char *name, int struct_id, int relative_pos) {
     return var_table_top ++;
 }
 
+/*
+A var list is a comma separated sequence of arguments, that might have default values or hints.
+A var list declares all the variables it contains.
+*/
 int parse_var_list(token_t **t, int struct_id) {
     int count = 0;
     while (1) {
@@ -150,35 +196,90 @@ int parse_var_list(token_t **t, int struct_id) {
     return count;
 }
 
+loc_var_t get_loc_var_from_expr(expr_t *expr) {
+    loc_var_t lvar = {-1, 0};
+
+    // int rel_pos;
+    // int anchor = -1;
+    while (expr->type == ADD || expr->type == SUB) {
+        if (expr->left->type == ID) {
+            if (lvar.var_id != -1) {
+                fprintf(stderr, "Relative position cannot have two anchors.\n");
+                exit(-1);
+            }
+            lvar.var_id = get_struct_by_name(expr->left->val.str);
+            if (lvar.var_id == -1) {
+                lvar.var_id = get_var_by_name(expr->left->val.str);
+                if (lvar.var_id == -1) {
+                    UNDEFINED_VARIABLE_ERROR;
+                }
+            } else {
+                // URGENT: the struct needs to know its children
+            }
+        } else {
+            lvar.rel_pos += expr->left->val.num;
+        }
+
+        expr = expr->right;
+    }
+
+    return lvar;
+}
+
+expr_t *parse_expr(token_t **t) {
+    expect_tokens2(*t, ID, NUM);
+
+    if ((*t)[1].type != BINOP) {
+        ++ *t;
+        return (expr_t *)(*t - 1);
+    }
+
+    ++ *t;
+    expr_t *expr = malloc(sizeof(expr_t));
+    switch ((*t)->val.num) {
+        case '+': {
+            expr->type = ADD;
+        } break;
+        case '-': {
+            expr->type = SUB;
+        } break;
+        default: {
+            printf("Unexpected binary operation: \'%c\'\n", (*t)->val.num);
+            exit(-1);
+        }
+    }
+
+    ++ *t;
+    expr->left = (*t) - 2;
+    expr->right = parse_expr(t);
+
+    return expr;
+}
+
 // TODO: make it possible to specify the type of the argument
 /*
-Parses a comma separated list of ids (functions or variables).
+Parses a comma separated list of expressions.
 Currently, the default argument type is variable, so a process is unable to return or take a function type.
 */
-int *parse_id_list(token_t **t, int *count) {
+loc_var_t *parse_id_list(token_t **t, int *count) {
     int len = 10;
-    int *var_ids = malloc(sizeof(int) * len);
+    loc_var_t *vars = malloc(sizeof(loc_var_t) * len);
     int top = 0;
 
     while (1) {
-        if ((*t)->type == NUM) {
-            // URGENT: add possibility for numbers as arguments
-        }
-
-        expect_token(*t, ID);
-
         if (top >= len) {
             len *= 2;
-            var_ids = realloc(var_ids, len);
+            vars = realloc(vars, len);
         }
 
-        var_ids[top] = get_var_by_name((*t)->val.str);
-        if (var_ids[top] == -1) {
-            var_ids[top] = get_func_by_name((*t)->val.str);
-            if (var_ids[top] != -1) {
-                var_ids[top] = register_var((*t)->val.str, -1, 0);
-            }
-        }
+        vars[top] = get_loc_var_from_expr(parse_expr(t));
+        // vars[top] = get_var_by_name((*t)->val.str);
+        // if (var_ids[top] == -1) {
+        //     var_ids[top] = get_func_by_name((*t)->val.str);
+        //     if (var_ids[top] != -1) {
+        //         var_ids[top] = register_var((*t)->val.str, -1, 0);
+        //     }
+        // }
         ++ top;
 
         // if (struct_id != -1) {
@@ -193,7 +294,7 @@ int *parse_id_list(token_t **t, int *count) {
     }
 
     *count = top;
-    return var_ids;
+    return vars;
 }
 
 // Parses and registers struct and it's variables
@@ -238,12 +339,12 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
             stmt->data.call.func_id = get_func_by_name((*t)->val.str);
             ++ *t;
 
-            stmt->data.call.var_id = parse_id_list(t, &(stmt->data.call.arg_len));
+            stmt->data.call.vars = parse_id_list(t, &(stmt->data.call.arg_len));
         } break;
         case REF: {
             stmt->type = REF_STMT;
             ++ *t;
-            stmt->data.call.var_id = parse_id_list(t, &(stmt->data.call.arg_len));
+            stmt->data.call.vars = parse_id_list(t, &(stmt->data.call.arg_len));
         } break;
         case L_BRACKET: {
             ++ *t;
@@ -252,7 +353,7 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
 
             stmt->type = COMPILER_DIRECTIVE;
 
-            stmt->data.call.var_id = parse_id_list(t, &(stmt->data.call.arg_len));
+            stmt->data.call.vars = parse_id_list(t, &(stmt->data.call.arg_len));
         
             expect_token(*t, R_BRACKET);
             ++ *t;
@@ -264,7 +365,7 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
             // NOTE: may be used for lambdas, macros??
             // stmt->data.control_flow_call.func_id = ;
             ++ *t;
-            stmt->data.control_flow_call.var_id = parse_id_list(t, &(stmt->data.control_flow_call.arg_len));
+            stmt->data.control_flow_call.vars = parse_id_list(t, &(stmt->data.control_flow_call.arg_len));
             stmt->data.control_flow_call.body = parse_body(t);
         }
         default: {

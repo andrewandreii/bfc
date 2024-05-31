@@ -3,7 +3,7 @@
 const char *token_names[] = {
 	"PROC", "STRUCT", "REF", "WHILE", "IF", "ELSE", "END", "NL",
 	"L_PRAN", "R_PARAN", "L_BRACKET", "R_BRACKET", "EQUAL",
-	"COMMA", "ARROW", "IF0", "NUM", "ID"
+	"COMMA", "ARROW", "IF0", "NUM", "ID", "EOF_TOKEN", "BINOP"
 };
 
 void log_token(FILE *outfile, token_t *t) {
@@ -14,6 +14,8 @@ void log_token(FILE *outfile, token_t *t) {
         fprintf(outfile, "(%s: %d) ", token_names[t->type], t->val.num);
     } else if (t->type == ID) {
         fprintf(outfile, "(%s: %s) ", token_names[t->type], t->val.str);
+    } else if (t->type == BINOP) {
+        fprintf(outfile, "(%s: %c) ", token_names[t->type], t->val.num);
     } else {
         fprintf(outfile, "(Unknown token type: %d) ", t->type);
     }
@@ -55,7 +57,7 @@ token_t *tokenize(FILE *stream) {
             t_len += TOKEN_BUF_INC;
         }
 
-        if (isdigit(c) || ((c == '+' || c == '-') && isdigit(next_c))) {
+        if (isdigit(c) /* || ((c == '+' || c == '-') && isdigit(next_c)) */) {
             if (!isdigit(c)) {
                 fgetc(stream);
             }
@@ -107,6 +109,18 @@ token_t *tokenize(FILE *stream) {
         } else {
             ++ char_no;
             enum token_type type;
+
+            if (c == '/' && next_c == '/') {
+                char_no = 0;
+                ++ line_no;
+                while ((c = fgetc(stream)) != '\n' && !feof(stream));
+                goto found_token;
+            } else if (c == '-' && next_c == '>') {
+                ++ char_no;
+                type = ARROW;
+                goto found_token;
+            }
+
             switch (fgetc(stream)) {
                 case '\n': {
                     ++ line_no;
@@ -131,20 +145,10 @@ token_t *tokenize(FILE *stream) {
                 case ',': {
                     type = COMMA;
                 } break;
-                case '-': {
-                    if (fgetc(stream) != '>') {
-                        goto error;
-                    }
-                    ++ char_no;
-                    type = ARROW;
-                } break;
-                case '/': {
-                    if (fgetc(stream) != '/') {
-                        goto error;
-                    }
-                    char_no = 0;
-                    ++ line_no;
-                    while ((c = fgetc(stream)) != '\n' && !feof(stream));
+                case '-': case '/':
+                case '+': case '*': {
+                    type = BINOP;
+                    t_list[t_top].val.num = c;
                 } break;
                 default: {
                 error:
@@ -158,10 +162,12 @@ token_t *tokenize(FILE *stream) {
                 }
             }
 
+found_token:
             t_list[t_top].type = type;
             ++ t_top;
         }
         // log_token(stdout, t_list + t_top - 1);
+        // fflush(stdout);
         // printf("token ended at %d.\n", ftell(stream));
     }
 

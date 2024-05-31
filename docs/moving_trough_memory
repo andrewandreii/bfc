@@ -1,5 +1,5 @@
-| struct_1                  | list
-| x | y | z | temp0 | temp1 | a | b | a | b | a | b | ...
+|| struct_1                  || list
+|| x | y | z | temp0 | temp1 || a | b || a | b || a | b || ...
 
 goto list
 while a

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g --std=c2x
 LDFLAGS =
 sources = $(wildcard *.c)
 objs = $(sources:.c=.o)

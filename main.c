@@ -5,7 +5,7 @@
 #include "parser.h"
 
 int main() {
-    FILE *f = fopen("bf_find_example.bf", "r");
+    FILE *f = fopen("test/bf_find_example.bfc", "r");
 
     token_t *tokens = tokenize(f);
 
