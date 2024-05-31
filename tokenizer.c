@@ -57,7 +57,7 @@ token_t *tokenize(FILE *stream) {
             t_len += TOKEN_BUF_INC;
         }
 
-        t_list[t_top].source_file_pos = (source_file_pos_t){ .line_no = line_no, .col_no = char_no };
+        t_list[t_top].source_file_pos = (source_file_pos_t){ .line_no = line_no, .col_no = char_no + 1 };
 
         if (isdigit(c) /* || ((c == '+' || c == '-') && isdigit(next_c)) */) {
             if (!isdigit(c)) {

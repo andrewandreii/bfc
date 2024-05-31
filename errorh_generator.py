@@ -17,7 +17,7 @@ intro = """\
 error_template = """
 #define {name}(t) \\
     do {{ \\
-        fprintf(stderr, \"Error encountered at line %d, col %d\\n\", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no); \\
+        fprintf(stderr, \"Error encountered at line %d, col %d (%s)\\n\", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no, token_names[(t)->type]); \\
         fprintf(stderr, \"{error}\"); \\
         exit(-1); \\
     }} while (0)

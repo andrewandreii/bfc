@@ -10,21 +10,21 @@
 
 #define UNDEFINED_VARIABLE_ERROR(t) \
     do { \
-        fprintf(stderr, "Error encountered at line %d, col %d\n", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no); \
+        fprintf(stderr, "Error encountered at line %d, col %d (%s)\n", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no, token_names[(t)->type]); \
         fprintf(stderr, "UNDEFINED_VARIABLE_ERROR: Encountered a variable that hasn't been defined."); \
         exit(-1); \
     } while (0)
 
 #define REL_POS_MULTIPLE_ANCHORS_ERROR(t) \
     do { \
-        fprintf(stderr, "Error encountered at line %d, col %d\n", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no); \
+        fprintf(stderr, "Error encountered at line %d, col %d (%s)\n", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no, token_names[(t)->type]); \
         fprintf(stderr, "REL_POS_MULTIPLE_ANCHORS_ERROR: When specifying a cell address, it cannot depend on multiple variables/structures."); \
         exit(-1); \
     } while (0)
 
 #define UNEXPECTED_TOKEN(t) \
     do { \
-        fprintf(stderr, "Error encountered at line %d, col %d\n", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no); \
+        fprintf(stderr, "Error encountered at line %d, col %d (%s)\n", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no, token_names[(t)->type]); \
         fprintf(stderr, "UNEXPECTED_TOKEN: This type of token wasn't expected at this position."); \
         exit(-1); \
     } while (0)

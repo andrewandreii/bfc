@@ -375,7 +375,10 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
             ++ *t;
             stmt->data.control_flow_call.vars = parse_id_list(t, &(stmt->data.control_flow_call.arg_len));
             stmt->data.control_flow_call.body = parse_body(t);
-        }
+
+            expect_token(*t, END);
+            ++ *t;
+        } break;
         default: {
             UNEXPECTED_TOKEN(*t);
         }
@@ -388,11 +391,11 @@ ast_node_t *parse_body(token_t **t) {
     ast_node_t *body = malloc(len * sizeof(ast_node_t));
     int top = 0;
     
-    while ((*t)->type != EOF_TOKEN && (*t)->type != END) {
-        while ((*t)->type == NL) {
-            ++ *t;
-        }
+    while ((*t)->type == NL) {
+        ++ *t;
+    }
 
+    while ((*t)->type != EOF_TOKEN && (*t)->type != END) {
         if (top >= len) {
             len *= 2;
             body = realloc(body, len);
@@ -400,6 +403,10 @@ ast_node_t *parse_body(token_t **t) {
 
         parse_statement(t, body + top);
         ++ top;
+    
+        while ((*t)->type == NL) {
+            ++ *t;
+        }
     }
 
     return body;
