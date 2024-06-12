@@ -6,7 +6,7 @@ void dump_value(FILE *log, bfc_value_t *val) {
         return;
     }
 
-    printf("%d:%s+%d\n", var_table[val->var_id].struct_id, var_table[val->var_id].name, val->rel_pos);
+    printf("%d:%s%s%d\n", var_table[val->var_id].struct_id, var_table[val->var_id].name, val->rel_pos >= 0 ? " +" : " ", val->rel_pos);
 }
 
 void dump_context(FILE *log, code_emitter_context_t *ctx) {

@@ -1,5 +1,5 @@
 struct (x, y, z)[1]
 
-read x
-read y+1
-read z-1
+read 3 - 1 - x
+read y + 1 + 20
+read z - 1 - 32
