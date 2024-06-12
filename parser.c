@@ -11,29 +11,14 @@ map_t *var_map;
 map_t *struct_map;
 map_t *func_map;
 
-// TODO: move to antoher file
-int code_emitter_read(FILE *stream) {
-    fputc(',', stream);
-
-    return 1;
-}
-
-typedef int (*code_emitter_func_sig)(FILE *);
-typedef struct {
-    char *name;
-
-    // TODO: change function signature to include context, arguments etc.
-    code_emitter_func_sig func;
-} func_table_entry_t;
-
-func_table_entry_t builtin_functions[] = {
-    { "read", &code_emitter_read }
-};
-
 
 // TODO: maybe less than this
 int usable_var[MAX_DEFINED_VARS];
 
+typedef struct { char *name; void *func; } func_table_entry_t;
+extern func_table_entry_t builtin_functions[];
+extern const size_t builtin_function_count;
+// size_t builtin_function_count = 1;
 
 void init_parser(void) {
     var_map = new_map(MAX_DEFINED_VARS / 2);
@@ -41,11 +26,10 @@ void init_parser(void) {
     func_map = new_map(30);
 
     int i;
-    for (i = 0; i < sizeof(builtin_functions) / sizeof(*builtin_functions); ++ i) {
+    for (i = 0; i < builtin_function_count; ++ i) {
         map_set_value(func_map, builtin_functions[i].name, builtin_functions + i);
     }
 }
-
 
 extern const char *token_names[];
 void expect_token(token_t *t, enum token_type type) {
@@ -145,13 +129,6 @@ int get_func_by_name(char *name) {
     return func - builtin_functions;
 }
 
-int get_id_by_name(char *name) {
-    // int id = get_var_by_name(name);
-    // if (id == -1) {
-    //     id = get_
-    // }
-}
-
 // TODO: use name
 int register_var(char *name, int struct_id, int relative_pos) {
     var_t *v = var_table + var_table_top;
@@ -198,27 +175,42 @@ int parse_var_list(token_t **t, int struct_id) {
     return count;
 }
 
-loc_var_t get_loc_var_from_expr(expr_t *expr) {
-    loc_var_t lvar = {-1, 0};
+bfc_value_t get_bfc_values_from_expr(expr_t *expr) {
+    bfc_value_t lvar = {-1, 0};
 
-    while (expr->type == ADD || expr->type == SUB) {
+    if (expr->type == -1) {
+        lvar.var_id = get_var_by_name(expr->left->val.str);
+        if (lvar.var_id == -1) {
+            lvar.var_id = get_struct_by_name(expr->left->val.str);
+            if (lvar.var_id == -1) {
+                UNDEFINED_VARIABLE_ERROR(expr->left);
+            } else {
+                // URGENT: the struct needs to know its children or at least the first child
+            }
+        }
+        return lvar;
+    }
+
+    int sign = 1;
+    while (expr) {
         if (expr->left->type == ID) {
             if (lvar.var_id != -1) {
                 REL_POS_MULTIPLE_ANCHORS_ERROR(expr->left);
             }
-            lvar.var_id = get_struct_by_name(expr->left->val.str);
+            lvar.var_id = get_var_by_name(expr->left->val.str);
             if (lvar.var_id == -1) {
-                lvar.var_id = get_var_by_name(expr->left->val.str);
+                lvar.var_id = get_struct_by_name(expr->left->val.str);
                 if (lvar.var_id == -1) {
                     UNDEFINED_VARIABLE_ERROR(expr->left);
+                } else {
+                    // URGENT: the struct needs to know its children or at least the first child
                 }
-            } else {
-                // URGENT: the struct needs to know its children
             }
         } else {
-            lvar.rel_pos += expr->left->val.num;
+            lvar.rel_pos += expr->left->val.num * sign;
         }
 
+        sign = expr->type == ADD ? 1 : -1;
         expr = expr->right;
     }
 
@@ -226,7 +218,10 @@ loc_var_t get_loc_var_from_expr(expr_t *expr) {
 }
 
 expr_t *parse_expr(token_t **t) {
-    expect_tokens(*t, 3, ID, NUM, BINOP);
+    //expect_tokens(*t, 3, ID, NUM, BINOP);
+    if ((*t)->type != ID && (*t)->type != NUM && (*t)->type != BINOP) {
+        return NULL;
+    }
 
     int sign = 1;
     if ((*t)->type == BINOP) {
@@ -238,13 +233,17 @@ expr_t *parse_expr(token_t **t) {
         ++ *t;
     }
 
-    if ((*t)[1].type != BINOP) {
-        ++ *t;
-        return (expr_t *)(*t - 1);
+    expr_t *expr = malloc(sizeof(expr_t));
+    expr->right = NULL;
+    if ((*t)->type == ID || (*t)->type == NUM) {
+        expr->left = *t;
+        expr->left->val.num *= sign;
+    } else {
+        expr->type = -1;
+        return expr;
     }
 
     ++ *t;
-    expr_t *expr = malloc(sizeof(expr_t));
     switch ((*t)->val.num) {
         case '+': {
             expr->type = ADD;
@@ -253,13 +252,12 @@ expr_t *parse_expr(token_t **t) {
             expr->type = SUB;
         } break;
         default: {
-            UNEXPECTED_TOKEN(*t);
+            expr->type = -1;
+            return expr;
         }
     }
 
     ++ *t;
-    (*t)[-2].val.num *= sign;
-    expr->left = (*t) - 2;
     expr->right = parse_expr(t);
 
     return expr;
@@ -270,9 +268,9 @@ expr_t *parse_expr(token_t **t) {
 Parses a comma separated list of expressions.
 Currently, the default argument type is variable, so a process is unable to return or take a function type.
 */
-loc_var_t *parse_id_list(token_t **t, int *count) {
+bfc_value_t *parse_id_list(token_t **t, int *count) {
     int len = 10;
-    loc_var_t *vars = malloc(sizeof(loc_var_t) * len);
+    bfc_value_t *vars = malloc(sizeof(bfc_value_t) * len);
     int top = 0;
 
     while (1) {
@@ -281,7 +279,12 @@ loc_var_t *parse_id_list(token_t **t, int *count) {
             vars = realloc(vars, len);
         }
 
-        vars[top] = get_loc_var_from_expr(parse_expr(t));
+        expr_t *expr = parse_expr(t);
+        if (!expr) {
+            break;
+        }
+
+        vars[top] = get_bfc_values_from_expr(expr);
         // vars[top] = get_var_by_name((*t)->val.str);
         // if (var_ids[top] == -1) {
         //     var_ids[top] = get_func_by_name((*t)->val.str);
@@ -324,10 +327,13 @@ int parse_struct(token_t **t) {
     ++ *t;
 
     int struct_span;
-    if ((*t)->type == R_BRACKET) {
+    if ((*t)->type == L_BRACKET) {
         ++ *t;
         expect_token(*t, NUM);
         struct_span = (*t)->val.num;
+        ++ *t;
+        expect_token(*t, R_BRACKET);
+        ++ *t;
     }
 
     // NOTE: start_address is calculated at the end of parsing when all struct have been added
@@ -335,6 +341,9 @@ int parse_struct(token_t **t) {
     return register_struct(name, var_count, struct_span);
 }
 
+/*
+Parses a statement. The type of stmt is -1 when it encounters a ELSE
+ */
 void parse_statement(token_t **t, ast_node_t *stmt) {
     switch ((*t)->type) {
         case STRUCT: {
@@ -369,15 +378,35 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
             ++ *t;
         } break;
         case WHILE: {
-            stmt->type = WHILE_STMT;
+            stmt->type = CONTROL_FLOW_STMT;
             // NOTE: may be used for lambdas, macros??
             // stmt->data.control_flow_call.func_id = ;
             ++ *t;
+            stmt->data.control_flow_call.func_id = get_func_by_name((*t)->val.str);
             stmt->data.control_flow_call.vars = parse_id_list(t, &(stmt->data.control_flow_call.arg_len));
-            stmt->data.control_flow_call.body = parse_body(t);
+            stmt->data.control_flow_call.body = parse_body(t, &stmt->data.control_flow_call.body_len);
 
             expect_token(*t, END);
             ++ *t;
+        } break;
+        case IF: {
+            stmt->type = CONTROL_FLOW_STMT;
+
+            ++ *t;
+            stmt->data.control_flow_call.func_id = get_func_by_name((*t)->val.str);
+            stmt->data.control_flow_call.vars = parse_id_list(t, &(stmt->data.control_flow_call.arg_len));
+            stmt->data.control_flow_call.body = parse_body(t, &stmt->data.control_flow_call.body_len);
+
+            if ((*t)->type == ELSE) {
+                ++ *t;
+                stmt->data.control_flow_call.body2 = parse_body(t, &stmt->data.control_flow_call.body2_len);
+            }
+
+            expect_token(*t, END);
+            ++ *t;
+        } break;
+        case ELSE: {
+            stmt->type = -1;
         } break;
         default: {
             UNEXPECTED_TOKEN(*t);
@@ -385,7 +414,7 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
     }
 }
 
-ast_node_t *parse_body(token_t **t) {
+ast_node_t *parse_body(token_t **t, size_t *count) {
     // TODO: maybe the length can be guessed by the number of lines
     int len = 10;
     ast_node_t *body = malloc(len * sizeof(ast_node_t));
@@ -402,6 +431,9 @@ ast_node_t *parse_body(token_t **t) {
         }
 
         parse_statement(t, body + top);
+        if (body[top].type == -1) {
+            break;
+        }
         ++ top;
     
         while ((*t)->type == NL) {
@@ -409,6 +441,7 @@ ast_node_t *parse_body(token_t **t) {
         }
     }
 
+    *count = top;
     return body;
 }
 
@@ -424,7 +457,7 @@ ast_node_t *parse_program(token_t *t) {
         prog->data.program.decl = parse_proc(&t);
     }
 
-    prog->data.program.body = parse_body(&t);
+    prog->data.program.body = parse_body(&t, &prog->data.program.body_len);
 
     return prog;
 }

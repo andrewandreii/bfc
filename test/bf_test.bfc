@@ -1,4 +1,5 @@
-struct (x, y, z, temp0, temp1)[1]
+struct (x, y, z)[1]
 
 read x
-write z
+read y+1
+read z-1

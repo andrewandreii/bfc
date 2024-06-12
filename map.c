@@ -77,8 +77,8 @@ static void free_bucket(bucket_t *b) {
 void *map_get_value(map_t *map, char *key) {
     size_t hash = djb2(key) % map->len;
 
-    void *data;
-    if (data = bucket_get(map->buckets + hash, key)) {
+    void *data = bucket_get(map->buckets + hash, key);
+    if (data) {
         return data;
     }
 

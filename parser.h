@@ -12,17 +12,26 @@
 enum ast_node_type {
     // ID_LIST == VAR_LIST
     PROGRAM, PROC_DECL, ID_LIST,
-    STRUCT_STMT, WHILE_STMT, IF_STMT,
+    STRUCT_STMT, CONTROL_FLOW_STMT,
     FUNC_CALL,
 
     // maybe used in the future for bfc debugging
     COMPILER_DIRECTIVE, REF_STMT
 };
 
+/*
+A bfc value refers to:
+    - a constant (i.e. 1 or 'a')
+    - a variable (i.e. the variable X of struct Y)
+    - (in the future) a procedure (i.e. the procedure X from file Y)
+ */
 typedef struct {
+    // if -1, the struct refers to a constant
     int var_id;
+
+    // if var_id is -1, it refers to the constant value
     int rel_pos;
-} loc_var_t;
+} bfc_value_t;
 
 /*
 grammar:
@@ -54,6 +63,7 @@ typedef struct _ast_node_t {
         struct {
             struct _ast_node_t *decl;
             struct _ast_node_t *body;
+            size_t body_len;
         } program;
         /*
         Keeps track of the signature of bfc files (useful when calling into other files).
@@ -92,7 +102,7 @@ typedef struct _ast_node_t {
          */
         struct {
             int func_id;
-            loc_var_t *vars;
+            bfc_value_t *vars;
             int arg_len;
         } call;
         /*
@@ -110,9 +120,13 @@ typedef struct _ast_node_t {
          */
         struct {
             int func_id;
-            loc_var_t *vars;
+            bfc_value_t *vars;
             int arg_len;
             struct _ast_node_t *body;
+            size_t body_len;
+            // Secondary body, used by the if-else statement
+            struct _ast_node_t *body2;
+            size_t body2_len;
         } control_flow_call;
         expr_t expr;
     } data;
@@ -127,7 +141,7 @@ typedef struct _ast_node_t {
 
 void init_parser(void);
 ast_node_t *parse_program(token_t *tokens);
-ast_node_t *parse_body(token_t **t);
+ast_node_t *parse_body(token_t **t, size_t *count);
 void parse_statement(token_t **t, ast_node_t *stmt);
 
 #endif
