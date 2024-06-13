@@ -17,6 +17,9 @@ typedef struct {
 
     // NOTE: position relative to the struct
     int pos;
+
+    // used by control flow emitters, they need to know it in order to generate code for their statements
+    ast_node_t *node;
 } code_emitter_context_t;
 
 typedef int (*code_emitter_func_sig)(code_emitter_context_t *ctx);
@@ -34,11 +37,13 @@ typedef struct {
 // api
 code_emitter_context_t *init_context(FILE *code_output);
 void emit_function_call(code_emitter_context_t *ctx, ast_node_t *func);
+void emit_statement(code_emitter_context_t *ctx, ast_node_t *stmt);
 
 // builtins
 FUNC_CODE_EMITTER_SIG(read);
 FUNC_CODE_EMITTER_SIG(write);
-// FUNC_CODE_EMITTER_SIG(while);
+FUNC_CODE_EMITTER_SIG(while);
+FUNC_CODE_EMITTER_SIG(if);
 
 // helpers (aka private functions)
 FUNC_CODE_EMITTER_SIG(goto);

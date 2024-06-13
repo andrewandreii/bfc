@@ -22,6 +22,10 @@ void emit_function_call(code_emitter_context_t *ctx, ast_node_t *func) {
 void emit_control_flow(code_emitter_context_t *ctx, ast_node_t *stmt) {
     ctx->arguments = stmt->data.control_flow_call.vars;
     ctx->arguments_length = stmt->data.control_flow_call.arg_len;
+
+    ctx->node = stmt;
+
+    builtin_functions[stmt->data.control_flow_call.func_id].func(ctx);
 }
 
 void emit_statement(code_emitter_context_t *ctx, ast_node_t *stmt) {

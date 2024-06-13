@@ -29,4 +29,11 @@
         exit(-1); \
     } while (0)
 
+#define CANT_FIND_FUNCTION_SIGNATURE(t) \
+    do { \
+        fprintf(stderr, "Error encountered at line %d, col %d (%s)\n", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no, token_names[(t)->type]); \
+        fprintf(stderr, "CANT_FIND_FUNCTION_SIGNATURE: The number of arguments does not match any signature."); \
+        exit(-1); \
+    } while (0)
+
 #endif

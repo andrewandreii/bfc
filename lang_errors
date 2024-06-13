@@ -1,3 +1,4 @@
 UNDEFINED_VARIABLE_ERROR: Encountered a variable that hasn't been defined.
 REL_POS_MULTIPLE_ANCHORS_ERROR: When specifying a cell address, it cannot depend on multiple variables/structures.
 UNEXPECTED_TOKEN: This type of token wasn't expected at this position.
+CANT_FIND_FUNCTION_SIGNATURE: The number of arguments does not match any signature.

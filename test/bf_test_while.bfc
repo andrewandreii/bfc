@@ -1,0 +1,10 @@
+struct (x, y, z)
+
+[[useif]]
+ref y
+
+read x
+while x
+    read x+1
+    write y
+end

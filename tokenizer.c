@@ -3,7 +3,8 @@
 const char *token_names[] = {
 	"PROC", "STRUCT", "REF", "WHILE", "IF", "ELSE", "END", "NL",
 	"L_PRAN", "R_PARAN", "L_BRACKET", "R_BRACKET", "EQUAL",
-	"COMMA", "ARROW", "NUM", "ID", "EOF_TOKEN", "BINOP"
+	"COMMA", "ARROW", "BINOP", "USEIF", "USECONST", "USECPY",
+    "USEA", "NUM", "ID", "EOF_TOKEN"
 };
 
 void log_token(FILE *outfile, token_t *t) {
@@ -21,8 +22,8 @@ void log_token(FILE *outfile, token_t *t) {
     }
 }
 
-const char *keywords[] = { "proc", "struct", "ref", "while", "while0", "if", "if0", "else", "end", NULL };
-const enum token_type keyword_str_to_type[] = { PROC, STRUCT, REF, WHILE, WHILE, IF, IF, ELSE, END };
+const char *keywords[] = { "proc", "struct", "ref", "while", "while0", "if", "if0", "else", "end", "useif", "useconst", "usecpy", "usea", NULL };
+const enum token_type keyword_str_to_type[] = { PROC, STRUCT, REF, WHILE, WHILE, IF, IF, ELSE, END, USEIF, USECONST, USECPY, USEA };
 
 token_t *tokenize(FILE *stream) {
     token_t *t_list = malloc(sizeof(token_t) * TOKEN_BUF_LEN);

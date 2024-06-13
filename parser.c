@@ -370,19 +370,64 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
 
             stmt->type = COMPILER_DIRECTIVE;
 
-            stmt->data.call.vars = parse_id_list(t, &(stmt->data.call.arg_len));
-        
+            // stmt->data.call.vars = parse_id_list(t, &(stmt->data.call.arg_len));
+            token_t *comp_dir_start = *t;
+            int comp_dir_len = 0;
+            while ((*t)->type != R_BRACKET && (*t)->type != NL && (*t)->type != EOF_TOKEN) {
+                switch ((*t)->type) {
+                    case USEIF: {
+                        (*t)->type = USEIF_FLAG;
+                    } break;
+                    case USECONST: {
+                        (*t)->type = USECONST_FLAG;
+                    } break;
+                    case USECPY: {
+                        (*t)->type = USECPY_FLAG;
+                    } break;
+                    case USEA: {
+                        (*t)->type = USEA_FLAG;
+                    } break;
+                    default: {
+                        UNEXPECTED_TOKEN(*t);
+                    }
+                }
+
+                ++ *t;
+                ++ comp_dir_len;
+            }
+
             expect_token(*t, R_BRACKET);
             ++ *t;
             expect_token(*t, R_BRACKET);
             ++ *t;
+
+            while ((*t)->type == NL) {
+                ++ *t;
+            }
+
+            expect_token(*t, REF);
+            ++ *t;
+            while ((*t)->type == ID) {
+                int id = get_var_by_name((*t)->val.str);
+                if (id == -1) {
+                    UNDEFINED_VARIABLE_ERROR(*t);
+                }
+
+                int i;
+                for (i = 0; i < comp_dir_len; ++ i) {
+                    var_table[id].flags |= comp_dir_start[i].type;
+                    printf("set %d flag to %s\n", comp_dir_start[i].type, (*t)->val.str);
+                }
+                
+                ++ *t;
+            }
         } break;
         case WHILE: {
             stmt->type = CONTROL_FLOW_STMT;
             // NOTE: may be used for lambdas, macros??
             // stmt->data.control_flow_call.func_id = ;
             ++ *t;
-            stmt->data.control_flow_call.func_id = get_func_by_name((*t)->val.str);
+            stmt->data.control_flow_call.func_id = get_func_by_name("while");
             stmt->data.control_flow_call.vars = parse_id_list(t, &(stmt->data.control_flow_call.arg_len));
             stmt->data.control_flow_call.body = parse_body(t, &stmt->data.control_flow_call.body_len);
 
@@ -393,7 +438,7 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
             stmt->type = CONTROL_FLOW_STMT;
 
             ++ *t;
-            stmt->data.control_flow_call.func_id = get_func_by_name((*t)->val.str);
+            stmt->data.control_flow_call.func_id = get_func_by_name("if");
             stmt->data.control_flow_call.vars = parse_id_list(t, &(stmt->data.control_flow_call.arg_len));
             stmt->data.control_flow_call.body = parse_body(t, &stmt->data.control_flow_call.body_len);
 
