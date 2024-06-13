@@ -10,6 +10,8 @@ func_table_entry_t builtin_functions[] = {
 };
 const size_t builtin_function_count = sizeof(builtin_functions) / sizeof(*builtin_functions);
 
+extern int usable_var[];
+extern size_t usable_var_top;
 
 FUNC_CODE_EMITTER_SIG(read) {
     int i;
@@ -29,6 +31,13 @@ FUNC_CODE_EMITTER_SIG(write) {
         fputc('.', ctx->code_output);
         ++ ctx->arguments;
     }
+
+    return 1;
+}
+
+// TODO: this could be written with a while, not sure if it's worth it
+FUNC_CODE_EMITTER_SIG(mov) {
+    
 
     return 1;
 }
@@ -61,10 +70,47 @@ FUNC_CODE_EMITTER_SIG(while) {
 
 FUNC_CODE_EMITTER_SIG(if) {
     // URGENT: automate functions signature checking
-    code_emitter_goto(ctx);
 
-    if (ctx->node->data.control_flow_call.body2_len > 0) {
+    int temp0_id = get_usable(USECPY_FLAG);
+    if (temp0_id == -1) {
+        fprintf(stderr, "Automatic temp variable not implemented.\n");
+        exit(-1);
+    }
 
+    disable_usable(temp0_id);
+
+    // URGENT: needs more optimization based on where we will be in the future
+    // for example:
+    // if x+1
+    //     read y+1
+    // end
+    // should choose a temp variable in the next cell
+    // could be solved by introducing `with` and leaving it up to the user
+    bfc_value_t suitable_temp0 = get_suitable_variant(ctx, temp0_id);
+    _empty(ctx, &suitable_temp0);
+
+    // ctx->arguments->rel_pos += suitable_temp0.rel_pos == -1 ? 1 : suitable_temp0.rel_pos == 1 ? -1 : 0;
+
+    _mov(ctx, &suitable_temp0, ctx->arguments);
+
+    _goto(ctx, &suitable_temp0);
+    fputc('[', ctx->code_output);
+    _empty(ctx, &suitable_temp0);
+
+    ast_node_t *body = ctx->node->data.control_flow_call.body;
+    size_t body_len = ctx->node->data.control_flow_call.body_len;
+
+    int i;
+    for (i = 0; i < body_len; ++ i) {
+        emit_statement(ctx, body + i);
+    }
+
+    _goto(ctx, &suitable_temp0);
+    fputc(']', ctx->code_output);
+
+    enable_usable(temp0_id);
+
+    if (ctx->node->data.control_flow_call.body2_len == 0) {
     }
 
     return 1;

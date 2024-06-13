@@ -14,6 +14,7 @@ map_t *func_map;
 
 // TODO: maybe less than this
 int usable_var[MAX_DEFINED_VARS];
+size_t usable_var_top = 0;
 
 typedef struct { char *name; void *func; } func_table_entry_t;
 extern func_table_entry_t builtin_functions[];
@@ -396,6 +397,10 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
                 ++ comp_dir_len;
             }
 
+            if (comp_dir_len == 0) {
+                UNEXPECTED_TOKEN(*t);
+            }
+
             expect_token(*t, R_BRACKET);
             ++ *t;
             expect_token(*t, R_BRACKET);
@@ -411,6 +416,15 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
                 int id = get_var_by_name((*t)->val.str);
                 if (id == -1) {
                     UNDEFINED_VARIABLE_ERROR(*t);
+                }
+
+                if ((var_table[id].flags & (USEIF_FLAG | USECONST_FLAG | USECPY_FLAG | USEA_FLAG)) == 0) {
+                    usable_var[usable_var_top] = id;
+                    ++ usable_var_top;
+#ifdef DEBUG
+                } else {
+                    fprintf(stderr, "Variable already inside of usable_var.\n");
+#endif
                 }
 
                 int i;

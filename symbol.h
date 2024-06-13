@@ -9,11 +9,15 @@
 #define USECONST_FLAG (1 << 1)
 #define USECPY_FLAG   (1 << 2)
 #define USEA_FLAG     (1 << 3)
+#define ALREADY_IN_USE_FLAG (1 << 4)
 // should this var be preserved? it's on by default
-#define PRESERVE_FLAG (1 << 4)
+#define PRESERVE_FLAG (1 << 5)
 
 // HELPER FLAGS
-#define DEFINED_FLAG (1 << 5)
+#define DEFINED_FLAG (1 << 6)
+// useful for optimizations, so that we don't unnecessarily clear cells
+// TODO: implement it in parser.h and keep track of it in the code emitters
+#define IS_CLEAR_FLAG (1 << 7)
 
 /*
 Any variable in this laangues must have a struct to which it belongs to, a position relative to the struct and modifiers.

@@ -18,6 +18,9 @@ typedef struct {
     // NOTE: position relative to the struct
     int pos;
 
+    // The aparent position.
+    int pivot;
+
     // used by control flow emitters, they need to know it in order to generate code for their statements
     ast_node_t *node;
 } code_emitter_context_t;
@@ -35,9 +38,15 @@ typedef struct {
 #define FUNC_CODE_EMITTER_ENTRY(name) { #name, &code_emitter_##name }
 
 // api
+
+// URGENT: context could be a global variable
 code_emitter_context_t *init_context(FILE *code_output);
 void emit_function_call(code_emitter_context_t *ctx, ast_node_t *func);
 void emit_statement(code_emitter_context_t *ctx, ast_node_t *stmt);
+int get_usable(int purpose);
+bfc_value_t get_suitable_variant(code_emitter_context_t *ctx, int id);
+void disable_usable(int id);
+void enable_usable(int id);
 
 // builtins
 FUNC_CODE_EMITTER_SIG(read);
@@ -47,5 +56,8 @@ FUNC_CODE_EMITTER_SIG(if);
 
 // helpers (aka private functions)
 FUNC_CODE_EMITTER_SIG(goto);
+int _goto(code_emitter_context_t *ctx, bfc_value_t *dest);
+int _mov(code_emitter_context_t *ctx, bfc_value_t *dest, bfc_value_t *orig);
+int _empty(code_emitter_context_t *ctx, bfc_value_t *cell);
 
 #endif

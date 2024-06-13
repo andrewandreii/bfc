@@ -1,5 +1,8 @@
 struct (x, y, z)
 
+[[usea]]
+ref y
+
 [[useif]]
 ref y
 

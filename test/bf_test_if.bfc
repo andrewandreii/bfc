@@ -1,0 +1,10 @@
+struct (x, y, z)
+
+[[usecpy]]
+ref z
+
+read x
+
+if x
+    write y
+end

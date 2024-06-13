@@ -7,7 +7,7 @@ code_emitter_context_t *init_context(FILE *code_output) {
 
     ctx->arguments_length = 0;
     ctx->code_output = code_output;
-    ctx->pos = ctx->selected_struct = ctx->struct_cell = 0;
+    ctx->pivot = ctx->pos = ctx->selected_struct = ctx->struct_cell = 0;
 
     return ctx;
 }
