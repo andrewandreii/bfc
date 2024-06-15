@@ -7,6 +7,8 @@
 extern var_t var_table[];
 extern struct_t struct_table[];
 
+extern char *token_names[];
+
 typedef struct {
     FILE *code_output;
     bfc_value_t *arguments;
@@ -59,5 +61,8 @@ FUNC_CODE_EMITTER_SIG(goto);
 int _goto(code_emitter_context_t *ctx, bfc_value_t *dest);
 int _mov(code_emitter_context_t *ctx, bfc_value_t *dest, bfc_value_t *orig);
 int _empty(code_emitter_context_t *ctx, bfc_value_t *cell);
+int _add_const(code_emitter_context_t *ctx, bfc_value_t *cell, int c);
+int _add(code_emitter_context_t *ctx, bfc_value_t *dest, bfc_value_t *orig);
+int _sub_const(code_emitter_context_t *ctx, bfc_value_t *cell, int c);
 
 #endif

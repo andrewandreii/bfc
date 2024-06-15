@@ -71,10 +71,22 @@ FUNC_CODE_EMITTER_SIG(while) {
 FUNC_CODE_EMITTER_SIG(if) {
     // URGENT: automate functions signature checking
 
+    int temp1_id = -1;
+    bfc_value_t suitable_temp1;
+    if (ctx->node->data.control_flow_call.body2_len > 0) {
+        temp1_id = get_usable(USEIF_FLAG);
+        if (temp1_id == -1) {
+            EXPECTED_USABLE_VARIABLE(ctx->node->start);
+        }
+        disable_usable(temp1_id);
+        suitable_temp1 = get_suitable_variant(ctx, temp1_id);
+        _empty(ctx, &suitable_temp1);
+        _add_const(ctx, &suitable_temp1, 1);
+    }
+
     int temp0_id = get_usable(USECPY_FLAG);
     if (temp0_id == -1) {
-        fprintf(stderr, "Automatic temp variable not implemented.\n");
-        exit(-1);
+        EXPECTED_USABLE_VARIABLE(ctx->node->start);
     }
 
     disable_usable(temp0_id);
@@ -105,12 +117,25 @@ FUNC_CODE_EMITTER_SIG(if) {
         emit_statement(ctx, body + i);
     }
 
+    if (temp1_id != -1) {
+        _goto(ctx, &suitable_temp1);
+        _sub_const(ctx, &suitable_temp1, 1);
+    }
+
     _goto(ctx, &suitable_temp0);
     fputc(']', ctx->code_output);
 
     enable_usable(temp0_id);
 
-    if (ctx->node->data.control_flow_call.body2_len == 0) {
+    if (temp1_id != -1) {
+        _goto(ctx, &suitable_temp1);
+        fputc('[', ctx->code_output);
+        _empty(ctx, &suitable_temp1);
+        for (i = 0; i < body_len; ++ i) {
+            emit_statement(ctx, body + i);
+        }
+        _goto(ctx, &suitable_temp1);
+        fputc(']', ctx->code_output);
     }
 
     return 1;

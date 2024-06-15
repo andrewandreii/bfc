@@ -130,6 +130,9 @@ typedef struct _ast_node_t {
         } control_flow_call;
         expr_t expr;
     } data;
+
+    // used for error printing
+    token_t *start;
 } ast_node_t;
 
 // parse compiler directive, it doens't have a node

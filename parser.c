@@ -346,6 +346,8 @@ int parse_struct(token_t **t) {
 Parses a statement. The type of stmt is -1 when it encounters a ELSE
  */
 void parse_statement(token_t **t, ast_node_t *stmt) {
+    stmt->start = *t;
+
     switch ((*t)->type) {
         case STRUCT: {
             stmt->type = STRUCT_STMT;
@@ -434,7 +436,14 @@ void parse_statement(token_t **t, ast_node_t *stmt) {
                 }
                 
                 ++ *t;
+
+                if ((*t)->type != COMMA) {
+                    break;
+                }
+
+                ++ *t;
             }
+            // log_token(stderr, *t);
         } break;
         case WHILE: {
             stmt->type = CONTROL_FLOW_STMT;
@@ -510,6 +519,7 @@ ast_node_t *parse_proc(token_t **t) {
 
 ast_node_t *parse_program(token_t *t) {
     ast_node_t *prog = malloc(sizeof(ast_node_t));
+    prog->start = t;
     prog->type = PROGRAM;
 
     if (t->type == PROC) {

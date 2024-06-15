@@ -1,10 +1,12 @@
-struct (x, y, z)
+struct (x, y, z, a)
 
-[[usecpy]]
-ref z
+[[usecpy useif]]
+ref z, a
 
 read x
 
 if x
     write y
+else
+    write x
 end

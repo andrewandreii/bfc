@@ -36,4 +36,11 @@
         exit(-1); \
     } while (0)
 
+#define EXPECTED_USABLE_VARIABLE(t) \
+    do { \
+        fprintf(stderr, "Error encountered at line %d, col %d (%s)\n", (t)->source_file_pos.line_no, (t)->source_file_pos.col_no, token_names[(t)->type]); \
+        fprintf(stderr, "EXPECTED_USABLE_VARIABLE: There is currently no usable variable that satisfies the needs of this statement."); \
+        exit(-1); \
+    } while (0)
+
 #endif

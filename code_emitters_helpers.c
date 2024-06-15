@@ -137,6 +137,35 @@ int _empty(code_emitter_context_t *ctx, bfc_value_t *cell) {
     return 1;
 }
 
+int _add(code_emitter_context_t *ctx, bfc_value_t *dest, bfc_value_t *orig) {
+    _goto(ctx, orig);
+    fputc('[', ctx->code_output);
+    _goto(ctx, dest);
+    fputc('+', ctx->code_output);
+    _goto(ctx, orig);
+    fputs("-]", ctx->code_output);
+    return 1;
+}
+
+// TODO: horrible code generation, should get optimized
+int _add_const(code_emitter_context_t *ctx, bfc_value_t *cell, int c) {
+    _goto(ctx, cell);
+    while (c) {
+        fputc('+', ctx->code_output);
+        -- c;
+    }
+    return 1;
+}
+
+int _sub_const(code_emitter_context_t *ctx, bfc_value_t *cell, int c) {
+    _goto(ctx, cell);
+    while (c) {
+        fputc('-', ctx->code_output);
+        -- c;
+    }
+    return 1;
+}
+
 // private emitters (follow the code emitter signature, but caan't be used as functions)
 FUNC_CODE_EMITTER_SIG(goto) {
     return _goto(ctx, ctx->arguments);
