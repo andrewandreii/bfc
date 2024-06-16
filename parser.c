@@ -151,6 +151,8 @@ A var list is a comma separated sequence of arguments, that might have default v
 A var list declares all the variables it contains.
 */
 int parse_var_list(token_t **t, int struct_id) {
+    struct_table[struct_id].first_var_id = -1;
+    
     int count = 0;
     while (1) {
         expect_token(*t, ID);
@@ -158,6 +160,10 @@ int parse_var_list(token_t **t, int struct_id) {
         int var_id = get_var_by_name((*t)->val.str);
         if (var_id == -1) {
             var_id = register_var((*t)->val.str, struct_id, count);
+        }
+
+        if (struct_table[struct_id].first_var_id == -1) {
+            struct_table[struct_id].first_var_id = var_id;
         }
 
         // if (struct_id != -1) {

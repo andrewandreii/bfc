@@ -79,6 +79,11 @@ typedef struct {
     The cell index on which this struct starts.
     */
     int start_address;
+
+    /*
+    The id of the first variable.
+     */
+    int first_var_id;
 } struct_t;
 
 #endif
