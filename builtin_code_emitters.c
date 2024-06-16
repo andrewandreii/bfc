@@ -4,6 +4,7 @@
 func_table_entry_t builtin_functions[] = {
     FUNC_CODE_EMITTER_ENTRY(read),
     FUNC_CODE_EMITTER_ENTRY(write),
+    FUNC_CODE_EMITTER_ENTRY(sgoto),
     // control flow is currently handled in the same way as functions
     FUNC_CODE_EMITTER_ENTRY(while),
     FUNC_CODE_EMITTER_ENTRY(if)
@@ -31,6 +32,23 @@ FUNC_CODE_EMITTER_SIG(write) {
         fputc('.', ctx->code_output);
         ++ ctx->arguments;
     }
+
+    return 1;
+}
+
+FUNC_CODE_EMITTER_SIG(sgoto) {
+    if (ctx->arguments_length != 1) {
+        CANT_FIND_FUNCTION_SIGNATURE(ctx->node->start);
+    }
+
+    // TODO: add the posibility of changing structs
+    // if (ctx->arguments->var_id != -1) {
+    //     ctx->selected_struct = ctx->arguments->var_id;
+    // }
+
+    ctx->pivot += ctx->arguments->rel_pos;
+    // bfc_value_t reset = { struct_table[ctx->selected_struct].first_var_id, 0 };
+    // _goto(ctx, reset);
 
     return 1;
 }

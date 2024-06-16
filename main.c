@@ -6,7 +6,7 @@
 #include "code_emitters.h"
 
 int main() {
-    FILE *f = fopen("test/bf_test_if.bfc", "r");
+    FILE *f = fopen("test/bf_test.bf", "r");
     FILE *out = fopen("test/test_output.bf", "w");
 
     token_t *tokens = tokenize(f);

@@ -50,26 +50,26 @@ int get_usable(int purpose) {
 bfc_value_t get_suitable_variant(code_emitter_context_t *ctx, int id) {
     bfc_value_t all_variants = { id, -1 };
     int before_dist = get_relative_raw_position(ctx->pos, &all_variants);
-    printf("before dist: %d\n", before_dist);
+    // printf("before dist: %d\n", before_dist);
     all_variants.rel_pos = 1;
     int after_dist = get_relative_raw_position(ctx->pos, &all_variants);
-    printf("after dist: %d\n", after_dist);
+    // printf("after dist: %d\n", after_dist);
     all_variants.rel_pos = 0;
     int current_dist = get_relative_raw_position(ctx->pos, &all_variants);
-    printf("current dist: %d\n", current_dist);
+    // printf("current dist: %d\n", current_dist);
 
     if (current_dist <= before_dist && current_dist <= after_dist) {
         all_variants.rel_pos = 0;
-        printf("current won\n");
+        // printf("current won\n");
         return all_variants;
     }
     if (before_dist <= current_dist && before_dist <= after_dist) {
         all_variants.rel_pos = -1;
-        printf("before won\n");
+        // printf("before won\n");
         return all_variants;
     }
     // if (after_dist <= current_dist && after_dist <= before_dist) {
-    printf("after won\n");
+    // printf("after won\n");
     all_variants.rel_pos = 1;
     return all_variants;
     // }

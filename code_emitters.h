@@ -53,6 +53,7 @@ void enable_usable(int id);
 // builtins
 FUNC_CODE_EMITTER_SIG(read);
 FUNC_CODE_EMITTER_SIG(write);
+FUNC_CODE_EMITTER_SIG(sgoto);
 FUNC_CODE_EMITTER_SIG(while);
 FUNC_CODE_EMITTER_SIG(if);
 
