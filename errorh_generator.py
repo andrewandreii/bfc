@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-errors = open("lang_errors", "r").read().strip().splitlines()
+errors = open("include/lang_errors", "r").read().strip().splitlines()
 
 intro = """\
 #ifndef ERRORS_H
@@ -27,7 +27,7 @@ outro = """
 #endif\
 """
 
-outfile = open("errors.h", "w")
+outfile = open("include/errors.h", "w")
 outfile.write(intro)
 
 for error in errors:
