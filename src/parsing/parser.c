@@ -185,20 +185,25 @@ int parse_var_list(token_t **t, int struct_id) {
 bfc_value_t get_bfc_values_from_expr(expr_t *expr) {
     bfc_value_t lvar = {-1, 0};
 
+    int sign = 1;
     if (expr->type == -1) {
-        lvar.var_id = get_var_by_name(expr->left->val.str);
-        if (lvar.var_id == -1) {
-            lvar.var_id = get_struct_by_name(expr->left->val.str);
+        if (expr->left->type == NUM) {
+            lvar.rel_pos = expr->left->val.num * sign;
+        } else {
+            lvar.var_id = get_var_by_name(expr->left->val.str);
+            printf("enterd %d\n", lvar.var_id);
             if (lvar.var_id == -1) {
-                UNDEFINED_VARIABLE_ERROR(expr->left);
-            } else {
-                // URGENT: the struct needs to know its children or at least the first child
+                lvar.var_id = get_struct_by_name(expr->left->val.str);
+                if (lvar.var_id == -1) {
+                    UNDEFINED_VARIABLE_ERROR(expr->left);
+                } else {
+                    // URGENT: the struct needs to know its children or at least the first child
+                }
             }
         }
         return lvar;
     }
 
-    int sign = 1;
     while (expr) {
         if (expr->left->type == ID) {
             if (lvar.var_id != -1) {
@@ -244,10 +249,12 @@ expr_t *parse_expr(token_t **t) {
     expr->right = NULL;
     if ((*t)->type == ID || (*t)->type == NUM) {
         expr->left = *t;
-        expr->left->val.num *= sign;
+
+        if ((*t)->type == NUM) {
+            expr->left->val.num *= sign;
+        }
     } else {
-        expr->type = -1;
-        return expr;
+        UNEXPECTED_TOKEN(*t);
     }
 
     ++ *t;
@@ -323,6 +330,8 @@ int parse_struct(token_t **t) {
     if ((*t)->type == ID) {
         name = (*t)->val.str;
         ++ *t;
+    } else {
+        name = NULL;
     }
 
     expect_token(*t, L_PARAN);
