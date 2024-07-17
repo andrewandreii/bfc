@@ -1,4 +1,4 @@
-# BFC Compiler (name subject to change)
+# BFC Compiler
 
 This is a transpiler for bfc that outputs bf code.
 
