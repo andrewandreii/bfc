@@ -1,8 +1,8 @@
 # BFC Compiler (name subject to change)
 
-This is a transpiler for the language that outputs bf code.
+This is a transpiler for bfc that outputs bf code.
 
-**Bfc** is a compiled language that is meant to be readable and scalable, while also following all of brainf*ck's limitations.
+**Bfc** is a compiled language that is meant to be readable and scalable, while also being limited to brainf\*ck's operations, memory layout etc.
 
 The language is assembly-like with some higher-level concepts implemented:
 
@@ -46,7 +46,7 @@ cd <folder>
 make install
 ```
 
-And done. Now you have access to a high level language that compiles to brainfuck. Make sure you get a bf interpreter to actually run your programs.
+Make sure you get a [bf interpreter/debugger](https://github.com/andrewandreii/bf_ncurses_debugger).
 
 ## Usage
 
@@ -69,30 +69,7 @@ See [this file](LICENCE).
 ## Why?
 
 ### Simple memory managment
-
-A common design pattern in bf is to structure your memory into groups of cells and bfc provides an easy way to keep track of the groupings.
-
-Suppose you have a list of numbers and you want to be able to compare any two adjecent elements. This would be done by having, for each element, one cell that remembers the name and possibly three other cells: two used to preserve the two values and another one used to check whether they are 0 or not. This number can be brought down, but the design pattern stands.
-
-| value | value_copy | if_else_var | value2_copy |
-
-The structure above would be repeated along the whole memory.
-
-### Automatically creates temporary variables
-
-One thing that is troublesome in bf, but not in bfc is the temporary variables for ifs, copying values, adding bigger numbers to a cell etc. Bfc is kind enough to create those temporary variables for you, notify when and why they were created and use them without being explicitly told to do so.
-
+### Automatically creates temporary variables (TODO)
 ### No more writting the same bf templates
-
-An if-else is not an easy task to write in bf. Even if it's not that hard to understand, it's a lot of work and programmers are supposed to be lazy (so I've writted this whole compiler because my fingers got tired of writing all those ifs).
-
-### What times what times what times... is 72?
-
-While not generating the tinies code in bf, the task of giving cells constant values is lifted off your shoulders and into the hands of bfc.
-
-### Which cell am I in again?
-
-No more remebering where you are the 100th time. Bfc moves you through cells, you only need to move through cell groupings.
-
-
-Well, this is really starting to sound like a comercial, so I will end it here. In the end, this project is just a pasion project and is, indeed, utterly useless.
+### Automatically writing bf code for constants (TODO)
+### An extra abstraction layer: you don't control the exact cell you are in, only the cell grouping
