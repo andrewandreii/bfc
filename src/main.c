@@ -5,9 +5,19 @@
 #include "parser.h"
 #include "code_emitters.h"
 
-int main() {
-    FILE *f = fopen("test/bf_test.bf", "r");
-    FILE *out = fopen("test/test_output.bf", "w");
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Please provide an input file");
+        return 1;
+    }
+
+    FILE *f = fopen(argv[1], "r");
+    if (!f) {
+        printf("Cannot open file");
+        return 1;
+    }
+
+    FILE *out = fopen("out.bf", "w");
 
     token_t *tokens = tokenize(f);
 
