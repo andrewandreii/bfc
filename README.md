@@ -68,8 +68,8 @@ See [this file](LICENCE).
 
 ## Why?
 
-### Simple memory managment
-### Automatically creates temporary variables (TODO)
-### No more writting the same bf templates
-### Automatically writing bf code for constants (TODO)
-### An extra abstraction layer: you don't control the exact cell you are in, only the cell grouping
+ - Simple memory managment
+ - Automatically creates temporary variables (TODO)
+ - No more writting the same bf templates
+ - Automatically writing bf code for constants (TODO)
+ - An extra abstraction layer: you don't control the exact cell you are in, only the cell grouping
